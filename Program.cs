@@ -1,3 +1,4 @@
+using GymGuide.Services;
 using GymGuide.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,8 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>();
 
+builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();   // needed for the Identity UI pages
 

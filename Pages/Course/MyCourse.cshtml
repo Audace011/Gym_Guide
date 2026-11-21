@@ -1,0 +1,64 @@
+﻿@page
+@model GymGuide.Pages.Course.MyCourseModel
+@{
+    ViewData["Title"] = "My Course";
+}
+
+<h2>My Course</h2>
+
+@if (TempData["Message"] is string tempMessage)
+{
+    <div class="alert alert-info">@tempMessage</div>
+}
+
+@if (Model.Plan.ActiveCourse == null)
+{
+    <div class="alert alert-warning">@Model.Plan.Message</div>
+}
+else
+{
+    var course = Model.Plan.ActiveCourse.Course;
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">@course.Name</h3>
+            <p class="card-text">@course.Description</p>
+            <p><strong>Duration:</strong> @course.DurationWeeks weeks</p>
+            <p><strong>Started:</strong> @Model.Plan.ActiveCourse.StartDate.ToString("dd MMM yyyy")</p>
+            <p><strong>Completed sessions:</strong> @Model.Plan.CompletedSessions</p>
+
+            <form method="post" asp-page-handler="MarkCompleted">
+                <input type="hidden" name="memberCourseId" value="@Model.Plan.ActiveCourse.MemberCourseId" />
+                <button type="submit" class="btn btn-success" disabled="@Model.Plan.LoggedToday">
+                    @(Model.Plan.LoggedToday ? "Today's session is logged" : "Mark today's session completed")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @foreach (var day in Model.Plan.ExercisesByDay)
+    {
+        <h4>@day.Key</h4>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Exercise</th>
+                    <th>Sets</th>
+                    <th>Reps</th>
+                    <th>Duration (min)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ex in day.Value)
+                {
+                    <tr>
+                        <td>@ex.Exercise.Name</td>
+                        <td>@ex.Sets</td>
+                        <td>@ex.Reps</td>
+                        <td>@ex.DurationMinutes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
