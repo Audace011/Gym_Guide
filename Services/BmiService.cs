@@ -1,35 +1,32 @@
-
-namespace GymGuide.Services;
-
-public class BmiService
+namespace GymGuide.Services
 {
-    public (decimal Bmi, string Category) CalculateBmi(
-        decimal weightKg,
-        decimal heightCm)
+    public interface IBmiService
     {
-        if (weightKg <= 0)
-            throw new ArgumentException("Weight must be greater than zero.");
+        decimal CalculateBmi(decimal weightKg, decimal heightCm);
+        string GetBmiCategory(decimal bmi);
+    }
 
-        if (heightCm <= 0)
-            throw new ArgumentException("Height must be greater than zero.");
+    public class BmiService : IBmiService
+    {
+        public decimal CalculateBmi(decimal weightKg, decimal heightCm)
+        {
+            if (heightCm <= 0 || weightKg <= 0)
+                return 0;
 
-        decimal heightMetres = heightCm / 100m;
-        decimal bmi = weightKg / (heightMetres * heightMetres);
+            decimal heightInMeters = heightCm / 100m;
+            decimal bmi = weightKg / (heightInMeters * heightInMeters);
+            return Math.Round(bmi, 1);
+        }
 
-        decimal roundedBmi = Math.Round(
-            bmi, 1, MidpointRounding.AwayFromZero);
-
-        string category;
-
-        if (bmi < 18.5m)
-            category = "Underweight";
-        else if (bmi < 25.0m)
-            category = "Normal";
-        else if (bmi < 30.0m)
-            category = "Overweight";
-        else
-            category = "Obese";
-
-        return (roundedBmi, category);
+        public string GetBmiCategory(decimal bmi)
+        {
+            if (bmi < 18.5m)
+                return "Underweight";
+            if (bmi <= 24.9m)
+                return "Normal";
+            if (bmi <= 29.9m)
+                return "Overweight";
+            return "Obese";
+        }
     }
 }

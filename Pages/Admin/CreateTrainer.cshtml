@@ -1,0 +1,82 @@
+@page
+@model GymGuide.Pages.Admin.CreateTrainerModel
+@{
+    ViewData["Title"] = "Add New Trainer";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i> Add New Trainer</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.FullName" class="form-label fw-semibold"></label>
+                        <input asp-for="Input.FullName" class="form-control" placeholder="e.g. Jane Smith" required />
+                        <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.Email" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.Email" class="form-control" type="email" placeholder="trainer@gym.com" required />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.PhoneNumber" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.PhoneNumber" class="form-control" placeholder="+250 7XX XXX XXX" />
+                            <span asp-validation-for="Input.PhoneNumber" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Password" class="form-label fw-semibold"></label>
+                        <input asp-for="Input.Password" class="form-control" type="password" placeholder="Min 6 characters" required />
+                        <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        <div class="form-text text-muted">The trainer will use this password to log in.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.Specialization" class="form-label fw-semibold"></label>
+                            <select asp-for="Input.Specialization" class="form-select" required>
+                                <option value="">-- Select Specialization --</option>
+                                <option value="Lose weight">Lose weight</option>
+                                <option value="Build muscle">Build muscle</option>
+                                <option value="Stay fit">Stay fit</option>
+                            </select>
+                            <span asp-validation-for="Input.Specialization" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.MaxClients" class="form-label fw-semibold"></label>
+                            <input asp-for="Input.MaxClients" class="form-control" type="number" min="1" max="50" required />
+                            <span asp-validation-for="Input.MaxClients" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" asp-for="Input.IsAvailable" id="availCheck" checked />
+                        <label class="form-check-label fw-semibold" for="availCheck">
+                            Available for member assignments immediately
+                        </label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-page="/Admin/Trainers" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">
+                            <i class="bi bi-person-plus-fill me-1"></i> Create Trainer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
