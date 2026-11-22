@@ -1,0 +1,98 @@
+
+@model GymGuide.ViewModels.MemberProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>My Member Profile</h2>
+            <p>Manage your personal information and fitness details.</p>
+        </div>
+        <a asp-action="Progress" class="btn btn-outline-primary">View weight progress</a>
+    </div>
+
+    @if (TempData["Success"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
+    <div class="card p-4 mb-4">
+        <h4>Personal Information</h4>
+
+        <form asp-action="SaveProfile" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+                <input asp-for="DateOfBirth" type="date" class="form-control" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Gender" class="form-label">Gender</label>
+                <select asp-for="Gender" class="form-select">
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="HeightCm" class="form-label">Height (cm)</label>
+                <input asp-for="HeightCm" class="form-control" />
+                <span asp-validation-for="HeightCm" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="WeightKg" class="form-label">Weight (kg)</label>
+                <input asp-for="WeightKg" class="form-control" />
+                <span asp-validation-for="WeightKg" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Goal" class="form-label">Fitness Goal</label>
+                <select asp-for="Goal" class="form-select">
+                    <option value="">Select your goal</option>
+                    <option value="Lose weight">Lose weight</option>
+                    <option value="Build muscle">Build muscle</option>
+                    <option value="Stay fit">Stay fit</option>
+                </select>
+                <span asp-validation-for="Goal" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Save Profile
+            </button>
+        </form>
+    </div>
+
+    <div class="card p-4">
+        <h4>Your BMI</h4>
+
+        @if (Model.Bmi.HasValue)
+        {
+            <h3>@Model.Bmi</h3>
+            <p>Category: @Model.BmiCategory</p>
+        }
+        else
+        {
+            <p>Enter your height and weight to calculate your BMI.</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.RecommendedCourse))
+        {
+            <p>
+                Recommended course: <strong>@Model.RecommendedCourse</strong>
+                <a asp-controller="Course" asp-action="MyCourse">View course</a>
+            </p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
