@@ -1,0 +1,71 @@
+@page
+@model GymGuide.Pages.Admin.TrainersModel
+@{
+    ViewData["Title"] = "Manage Trainers";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Trainer Staff &amp; Workload</h3>
+        <p class="text-muted small">Add, edit, or remove trainers and manage their availability</p>
+    </div>
+    <a asp-page="/Admin/CreateTrainer" class="btn btn-primary fw-semibold">
+        <i class="bi bi-person-plus-fill me-1"></i> Add New Trainer
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Trainer Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Specialization</th>
+                        <th>Clients</th>
+                        <th>Availability</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Trainers)
+                    {
+                        <tr>
+                            <td class="fw-bold">@t.User?.FullName</td>
+                            <td>@t.User?.Email</td>
+                            <td>@(t.User?.PhoneNumber ?? "—")</td>
+                            <td>
+                                <span class="badge bg-info text-dark">@t.Specialization</span>
+                            </td>
+                            <td>
+                                <span class="badge @(t.Members.Count >= t.MaxClients ? "bg-danger" : "bg-success")">
+                                    @t.Members.Count / @t.MaxClients
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" asp-page-handler="ToggleAvailability" asp-route-id="@t.TrainerId" class="d-inline">
+                                    <button type="submit" class="btn btn-sm @(t.IsAvailable ? "btn-outline-warning" : "btn-outline-success")">
+                                        @(t.IsAvailable ? "✓ Available" : "✗ Unavailable")
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <a asp-page="/Admin/EditTrainer" asp-route-id="@t.TrainerId" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-pencil-fill"></i> Edit
+                                </a>
+                                <form method="post" asp-page-handler="DeleteTrainer" asp-route-id="@t.TrainerId" class="d-inline"
+                                      onsubmit="return confirm('Delete trainer @t.User?.FullName? This will unassign all their members.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash-fill"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

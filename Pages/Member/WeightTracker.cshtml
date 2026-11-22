@@ -1,0 +1,181 @@
+@page
+@model GymGuide.Pages.Member.WeightTrackerModel
+@{
+    ViewData["Title"] = "Weight History & Progress Chart";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i> Weight &amp; Progress Tracking</h3>
+        <p class="text-muted small">Log your weight regularly to visualize your fitness journey on the interactive chart</p>
+    </div>
+    <a asp-page="/Member/Profile" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Profile
+    </a>
+</div>
+
+<div class="row">
+    <!-- Log Weight Form Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle text-warning me-2"></i> Log New Weight</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.NewWeightKg" class="form-label fw-semibold"></label>
+                        <div class="input-group input-group-lg">
+                            <input asp-for="Input.NewWeightKg" class="form-control" type="number" step="0.1" />
+                            <span class="input-group-text fw-bold">kg</span>
+                        </div>
+                        <span asp-validation-for="Input.NewWeightKg" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark shadow-sm">
+                            <i class="bi bi-check2-circle me-1"></i> Record Measurement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 bg-white p-3 text-center">
+            <div class="text-muted small fw-bold">CURRENT BMI</div>
+            <div class="display-5 fw-bold text-primary">@Model.Input.CurrentBmi</div>
+            <div>
+                <span class="badge bg-secondary fs-6">@Model.Input.CurrentBmiCategory</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Graph -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-bezier2 text-primary me-2"></i> Weight Trend Chart</h5>
+                <span class="badge bg-light text-dark border">Chart.js</span>
+            </div>
+            <div class="card-body p-4">
+                @if (Model.Input.Logs.Count > 0)
+                {
+                    <canvas id="weightChart" style="max-height: 320px;"></canvas>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-graph-up fs-1 d-block mb-2 text-secondary"></i>
+                        No weight logs recorded yet. Log your first measurement to view your chart!
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history text-secondary me-2"></i> Weight History Log (Newest to Oldest)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Weight (kg)</th>
+                        <th>Calculated BMI</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model.Input.Logs)
+                    {
+                        string badge = log.Bmicategory switch
+                        {
+                            "Underweight" => "bg-info text-dark",
+                            "Normal" => "bg-success text-white",
+                            "Overweight" => "bg-warning text-dark",
+                            "Obese" => "bg-danger text-white",
+                            _ => "bg-secondary"
+                        };
+
+                        <tr>
+                            <td>@log.LoggedAt.ToLocalTime().ToString("MMM dd, yyyy - hh:mm tt")</td>
+                            <td class="fw-bold">@log.WeightKg kg</td>
+                            <td class="text-primary fw-semibold">@log.Bmi</td>
+                            <td><span class="badge @badge">@log.Bmicategory</span></td>
+                        </tr>
+                    }
+                    @if (Model.Input.Logs.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">No records found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dates = @Html.Raw(Model.Input.ChartDatesJson);
+            const weights = @Html.Raw(Model.Input.ChartWeightsJson);
+
+            const canvas = document.getElementById('weightChart');
+            if (canvas && dates.length > 0) {
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Weight (kg)',
+                            data: weights,
+                            fill: true,
+                            backgroundColor: 'rgba(255, 193, 7, 0.15)',
+                            borderColor: '#ffc107',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#212529',
+                            pointBorderColor: '#ffc107',
+                            pointRadius: 5,
+                            tension: 0.2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Weight (kg)'
+                                },
+                                beginAtZero: false
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

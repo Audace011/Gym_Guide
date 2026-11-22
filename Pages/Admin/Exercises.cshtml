@@ -1,0 +1,49 @@
+@page
+@model GymGuide.Pages.Admin.ExercisesModel
+@{
+    ViewData["Title"] = "Manage Exercises";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="bi bi-heart-pulse text-danger me-2"></i> Exercise Library</h3>
+        <p class="text-muted small">Manage workout exercises and muscle group associations</p>
+    </div>
+    <a asp-page="/Admin/CreateExercise" class="btn btn-primary fw-bold">
+        <i class="bi bi-plus-circle me-1"></i> Add New Exercise
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Exercise Name</th>
+                        <th>Muscle Group</th>
+                        <th>Description</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ex in Model.Exercises)
+                    {
+                        <tr>
+                            <td class="fw-bold">@ex.Name</td>
+                            <td><span class="badge bg-secondary">@ex.MuscleGroup</span></td>
+                            <td class="text-muted small">@ex.Description</td>
+                            <td class="text-end">
+                                <a asp-page="/Admin/EditExercise" asp-route-id="@ex.ExerciseId" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <form asp-page-handler="Delete" asp-route-id="@ex.ExerciseId" method="post" class="d-inline" onsubmit="return confirm('Delete this exercise?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
