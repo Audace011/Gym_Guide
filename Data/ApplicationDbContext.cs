@@ -50,6 +50,22 @@ public partial class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var decimalProperties = entityType.ClrType.GetProperties()
+                    .Where(p => p.PropertyType == typeof(decimal) || p.PropertyType == typeof(decimal?));
+
+                foreach (var property in decimalProperties)
+                {
+                    modelBuilder.Entity(entityType.Name)
+                        .Property(property.Name)
+                        .HasConversion<double>();
+                }
+            }
+        }
+
         modelBuilder.Entity<CourseExercise>(entity =>
         {
             entity.HasKey(e => e.CourseExerciseId).HasName("PK__CourseEx__DF4C8BE1C3DB7DFC");

@@ -33,7 +33,8 @@ namespace GymGuide.Controllers
             var totalMembers = await _context.Members.CountAsync();
             var totalTrainers = await _context.Trainers.CountAsync();
             var totalCourses = await _context.TrainingCourses.CountAsync();
-            var totalRevenue = await _context.Payments.SumAsync(p => (decimal?)p.Amount) ?? 0m;
+            var paymentAmounts = await _context.Payments.Select(p => p.Amount).ToListAsync();
+            var totalRevenue = paymentAmounts.Sum();
 
             var trainers = await _context.Trainers
                 .Include(t => t.User)
@@ -497,13 +498,14 @@ namespace GymGuide.Controllers
             ViewBag.TrainerWorkloads = workloads;
 
             // Revenue Report grouped by plan
-            var revenuesByPlan = await _context.MembershipPlans
+            var plans = await _context.MembershipPlans.Include(p => p.Payments).ToListAsync();
+            var revenuesByPlan = plans
                 .Select(plan => new PlanRevenueItem
                 {
                     PlanName = plan.Name,
                     TotalPaymentsCount = plan.Payments.Count,
-                    TotalAmount = plan.Payments.Sum(p => (decimal?)p.Amount) ?? 0m
-                }).ToListAsync();
+                    TotalAmount = plan.Payments.Sum(p => p.Amount)
+                }).ToList();
 
             var revenueVm = new RevenueReportViewModel
             {
