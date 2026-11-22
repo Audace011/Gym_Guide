@@ -6,13 +6,28 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    ?? "Data Source=GymGuide.db";
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlServer(connectionString));
+var isSqlite = builder.Configuration.GetValue<bool>("UseSqlite")
+               || connectionString.Contains(".db")
+               || connectionString.StartsWith("Data Source=GymGuide", StringComparison.OrdinalIgnoreCase);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+if (isSqlite)
+{
+    builder.Services.AddDbContext<AuthDbContext>(options =>
+        options.UseSqlite(connectionString));
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    builder.Services.AddDbContext<AuthDbContext>(options =>
+        options.UseSqlServer(connectionString));
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
