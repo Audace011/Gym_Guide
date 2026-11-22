@@ -1,7 +1,7 @@
 @page
 @model GymGuide.Pages.Course.MyCourseModel
 @{
-    ViewData["Title"] = "My Workout Plan";
+    ViewData["Title"] = "My Weekly Workout Plan";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,7 +16,15 @@
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.NoCourseMessage))
+@if (TempData["Message"] is string tempMessage)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle me-1"></i> @tempMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Plan.ActiveCourse == null && !string.IsNullOrEmpty(Model.NoCourseMessage))
 {
     <div class="alert alert-info py-4 text-center">
         <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
@@ -24,26 +32,28 @@
         <a asp-page="/Member/Profile" class="btn btn-primary mt-2">Go to Profile</a>
     </div>
 }
-else
+else if (Model.Plan.ActiveCourse != null)
 {
+    var course = Model.Plan.ActiveCourse.Course;
+
     <!-- Active Course Summary Card -->
     <div class="card shadow-sm border-0 mb-4 bg-dark text-white">
         <div class="card-body p-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <span class="badge bg-warning text-dark fw-bold mb-2">ACTIVE PROGRAM</span>
-                    <h3 class="fw-bold text-white mb-2">@Model.CourseData.CourseName</h3>
-                    <p class="text-light opacity-75 mb-3">@Model.CourseData.Description</p>
+                    <h3 class="fw-bold text-white mb-2">@course.Name</h3>
+                    <p class="text-light opacity-75 mb-3">@course.Description</p>
                     <div class="d-flex flex-wrap gap-2">
-                        <span class="badge bg-secondary">Goal: @Model.CourseData.Goal</span>
-                        <span class="badge bg-secondary">Level: @Model.CourseData.Level</span>
-                        <span class="badge bg-secondary">BMI: @Model.CourseData.BmiCategory</span>
-                        <span class="badge bg-secondary">Duration: @Model.CourseData.DurationWeeks Weeks</span>
-                        <span class="badge bg-secondary">Started: @Model.CourseData.StartDate.ToString("MMM dd, yyyy")</span>
+                        <span class="badge bg-secondary">Goal: @course.Goal</span>
+                        <span class="badge bg-secondary">Level: @course.Level</span>
+                        <span class="badge bg-secondary">BMI: @course.Bmicategory</span>
+                        <span class="badge bg-secondary">Duration: @course.DurationWeeks Weeks</span>
+                        <span class="badge bg-secondary">Started: @Model.Plan.ActiveCourse.StartDate.ToString("MMM dd, yyyy")</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    @if (Model.CourseData.CompletedToday)
+                    @if (Model.Plan.LoggedToday)
                     {
                         <button class="btn btn-success btn-lg fw-bold" disabled>
                             <i class="bi bi-check-circle-fill me-1"></i> Today's Workout Done!
@@ -52,7 +62,7 @@ else
                     else
                     {
                         <form method="post" asp-page-handler="CompleteSession">
-                            <input type="hidden" name="memberCourseId" value="@Model.CourseData.MemberCourseId" />
+                            <input type="hidden" name="memberCourseId" value="@Model.Plan.ActiveCourse.MemberCourseId" />
                             <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark shadow">
                                 <i class="bi bi-check-lg me-1"></i> Mark Today as Completed
                             </button>
@@ -66,10 +76,10 @@ else
     <!-- Day by Day Exercises -->
     <h4 class="fw-bold mb-3"><i class="bi bi-list-check me-2 text-primary"></i> Scheduled Routine</h4>
 
-    @if (Model.CourseData.ExercisesByDay.Count > 0)
+    @if (Model.Plan.ExercisesByDay.Count > 0)
     {
         <div class="row">
-            @foreach (var day in Model.CourseData.ExercisesByDay)
+            @foreach (var day in Model.Plan.ExercisesByDay)
             {
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="card h-100 shadow-sm border-0">

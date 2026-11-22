@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using GymGuide.Data;
 using GymGuide.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +12,11 @@ namespace GymGuide.Services
         Task<TrainingCourse?> GetRecommendedCourseAsync(int memberId);
         Task<MemberCourse> AssignRecommendedCourseAsync(int memberId);
         Task<MemberCourse?> GetActiveCourseForMemberAsync(int memberId);
+        Task<MemberCourse?> GetActiveCourseAsync(int memberId);
+        Task<MemberCourse?> RecommendCourseAsync(int memberId);
     }
 
+    // FR4: recommends a Beginner course matching the member's goal and latest BMI category.
     public class RecommendationService : IRecommendationService
     {
         private readonly ApplicationDbContext _context;
@@ -22,6 +28,43 @@ namespace GymGuide.Services
             _bmiService = bmiService;
         }
 
+        // Returns the member's currently active course, or null if they have none.
+        public Task<MemberCourse?> GetActiveCourseAsync(int memberId)
+        {
+            return _context.MemberCourses
+                .Include(mc => mc.Course)
+                .FirstOrDefaultAsync(mc => mc.MemberId == memberId && mc.Status == "Active");
+        }
+
+        // Stores a recommended course as the member's Active course.
+        public async Task<MemberCourse?> RecommendCourseAsync(int memberId)
+        {
+            var existing = await GetActiveCourseAsync(memberId);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var course = await GetRecommendedCourseAsync(memberId);
+            if (course == null)
+            {
+                return null;
+            }
+
+            var memberCourse = new MemberCourse
+            {
+                MemberId = memberId,
+                CourseId = course.CourseId,
+                StartDate = DateOnly.FromDateTime(DateTime.Today),
+                Status = "Active",
+                Course = course
+            };
+
+            _context.MemberCourses.Add(memberCourse);
+            await _context.SaveChangesAsync();
+            return memberCourse;
+        }
+
         public async Task<TrainingCourse?> GetRecommendedCourseAsync(int memberId)
         {
             var member = await _context.Members
@@ -31,17 +74,11 @@ namespace GymGuide.Services
             if (member == null)
                 return null;
 
-            // Get latest BMI category from WeightLogs or member profile
             string bmiCategory = "Normal";
             var latestLog = member.WeightLogs.OrderByDescending(w => w.LoggedAt).FirstOrDefault();
             if (latestLog != null)
             {
                 bmiCategory = latestLog.Bmicategory;
-            }
-            else if (member.HeightCm.HasValue && member.HeightCm.Value > 0)
-            {
-                // Fallback default weight if not logged yet
-                bmiCategory = "Normal";
             }
 
             string goal = member.Goal ?? "Stay fit";

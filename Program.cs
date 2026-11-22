@@ -49,9 +49,11 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-// Register Business Services
+// Register Business Services (conserving both teammate services and core interfaces)
 builder.Services.AddScoped<IBmiService, BmiService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<ITrainerAssignmentService, TrainerAssignmentService>();
 
 builder.Services.AddRazorPages();
