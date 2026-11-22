@@ -7,9 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-var isSqlite = builder.Configuration.GetValue<bool>("UseSqlite")
-               || string.IsNullOrWhiteSpace(rawConnectionString)
-               || rawConnectionString.Contains(".db");
+var isSqlite = builder.Configuration.GetValue<bool?>("UseSqlite") ?? true;
+if (rawConnectionString != null && rawConnectionString.Contains("Server=") && !builder.Configuration.GetValue<bool>("UseSqlite"))
+{
+    isSqlite = false;
+}
 
 var connectionString = isSqlite
     ? (rawConnectionString != null && rawConnectionString.Contains(".db") ? rawConnectionString : "Data Source=GymGuide.db")
@@ -84,5 +86,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+if (args.Contains("--test"))
+{
+    using var testScope = app.Services.CreateScope();
+    var ctx = testScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var results = await GymGuide.Tests.UnitTestsRunner.RunAllTestsAsync(ctx);
+    int passed = results.Count(r => r.Passed);
+    Console.WriteLine($"\n================ TEST RESULTS: {passed}/{results.Count} PASSED ================");
+    foreach (var r in results)
+    {
+        Console.WriteLine($"[{(r.Passed ? "PASS" : "FAIL")}] {r.Category} - {r.TestName}: {r.Message}");
+    }
+    Console.WriteLine("=================================================================\n");
+    return;
+}
 
 app.Run();

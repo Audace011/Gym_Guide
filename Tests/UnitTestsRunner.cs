@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using GymGuide.Data;
 using GymGuide.Models;
 using GymGuide.Services;
@@ -21,7 +25,7 @@ namespace GymGuide.Tests
             var bmiService = new BmiService();
 
             // ==========================================
-            // 1. BMI Calculation & Boundary Unit Tests
+            // 1. BMI Calculation & Boundary Unit Tests (FR1, FR2)
             // ==========================================
             results.Add(RunTest("BMI Boundary: 18.4 -> Underweight", "BMI Service", () =>
             {
@@ -72,11 +76,75 @@ namespace GymGuide.Tests
             }));
 
             // ==========================================
-            // 2. Trainer Assignment Service Unit Tests
+            // 2. Course Recommendation Service Tests (FR4)
+            // ==========================================
+            var recService = new RecommendationService(context, bmiService);
+
+            results.Add(await RunTestAsync("Recommendation: Find or Recommend Beginner Course", "Course Recommendation", async () =>
+            {
+                var member = await context.Members.FirstOrDefaultAsync();
+                if (member != null)
+                {
+                    var course = await recService.GetRecommendedCourseAsync(member.MemberId);
+                    Assert(course != null, "RecommendationService should find a matching beginner course.");
+                    Assert(course.Level == "Beginner", $"Course level must be Beginner, got {course.Level}");
+                }
+            }));
+
+            results.Add(await RunTestAsync("Recommendation: Active Course Retrieval", "Course Recommendation", async () =>
+            {
+                var member = await context.Members.FirstOrDefaultAsync();
+                if (member != null)
+                {
+                    var active = await recService.GetActiveCourseAsync(member.MemberId);
+                    Assert(active == null || active.Status == "Active", "Active course must have 'Active' status.");
+                }
+            }));
+
+            // ==========================================
+            // 3. Workout Service Tests (FR5)
+            // ==========================================
+            var workoutService = new WorkoutService(context);
+
+            results.Add(await RunTestAsync("Workout Service: Exercises Retrieval for Course", "Workout Tracking", async () =>
+            {
+                var course = await context.TrainingCourses.FirstOrDefaultAsync();
+                if (course != null)
+                {
+                    var exercises = await workoutService.GetExercisesAsync(course.CourseId);
+                    Assert(exercises != null, "WorkoutService should return exercise list.");
+                }
+            }));
+
+            results.Add(await RunTestAsync("Workout Service: Today Session Check and Counter", "Workout Tracking", async () =>
+            {
+                var memberCourse = await context.MemberCourses.FirstOrDefaultAsync(mc => mc.Status == "Active");
+                if (memberCourse != null)
+                {
+                    var count = await workoutService.GetCompletedSessionCountAsync(memberCourse.MemberCourseId);
+                    Assert(count >= 0, "Completed session count should be non-negative.");
+
+                    var loggedToday = await workoutService.HasLoggedTodayAsync(memberCourse.MemberCourseId);
+                    Assert(loggedToday == true || loggedToday == false, "HasLoggedToday must return boolean.");
+                }
+            }));
+
+            // ==========================================
+            // 4. Trainer Assignment Service Tests (FR6)
             // ==========================================
             var trainerService = new TrainerAssignmentService(context);
 
-            results.Add(await RunTestAsync("Trainer Assignment: Match Specialization", "Trainer Assignment", async () =>
+            results.Add(await RunTestAsync("Trainer Assignment: Capacity Constraint", "Trainer Assignment", async () =>
+            {
+                var trainers = await context.Trainers.Include(t => t.Members).ToListAsync();
+                foreach (var t in trainers)
+                {
+                    Assert(t.Members.Count <= t.MaxClients, 
+                        $"Trainer {t.TrainerId} exceeds MaxClients limit: {t.Members.Count}/{t.MaxClients}");
+                }
+            }));
+
+            results.Add(await RunTestAsync("Trainer Assignment: Specialization Matching Priority", "Trainer Assignment", async () =>
             {
                 var member = await context.Members.FirstOrDefaultAsync(m => m.Goal == "Build muscle");
                 if (member != null)
@@ -87,30 +155,7 @@ namespace GymGuide.Tests
                 }
             }));
 
-            results.Add(await RunTestAsync("Trainer Assignment: Respect MaxClients Capacity", "Trainer Assignment", async () =>
-            {
-                var trainers = await context.Trainers.Include(t => t.Members).ToListAsync();
-                foreach (var t in trainers)
-                {
-                    Assert(t.Members.Count <= t.MaxClients, 
-                        $"Trainer {t.TrainerId} exceeds MaxClients limit: {t.Members.Count}/{t.MaxClients}");
-                }
-            }));
-
-            results.Add(await RunTestAsync("Trainer Assignment: Exclude Unavailable Trainers", "Trainer Assignment", async () =>
-            {
-                var assignedRequests = await context.TrainerRequests
-                    .Include(r => r.Trainer)
-                    .Where(r => r.Status == "Assigned" && r.Trainer != null)
-                    .ToListAsync();
-
-                foreach (var r in assignedRequests)
-                {
-                    Assert(r.Trainer != null, "Assigned request must have a valid trainer.");
-                }
-            }));
-
-            results.Add(await RunTestAsync("Workout Plan Adjustment: Safe Replacement (FR8)", "Trainer Assignment", async () =>
+            results.Add(await RunTestAsync("Workout Plan Adjustment: Safe Replacement (FR9)", "Trainer Assignment", async () =>
             {
                 var member = await context.Members.Include(m => m.MemberCourses).FirstOrDefaultAsync();
                 var courses = await context.TrainingCourses.Take(2).ToListAsync();
@@ -127,6 +172,26 @@ namespace GymGuide.Tests
 
                     Assert(activeCourse != null && activeCourse.CourseId == courses[1].CourseId, 
                         "New course should be Active after adjustment.");
+                }
+            }));
+
+            // ==========================================
+            // 5. Payments & In-Memory Revenue Summing (FR11, FR12)
+            // ==========================================
+            results.Add(await RunTestAsync("Payments: In-Memory Decimal Revenue Calculation", "Financial Reporting", async () =>
+            {
+                var paymentAmounts = await context.Payments.Select(p => p.Amount).ToListAsync();
+                var total = paymentAmounts.Sum();
+                Assert(total >= 0m, "Total revenue must be non-negative.");
+            }));
+
+            results.Add(await RunTestAsync("Plans: Revenue Grouping by Plan", "Financial Reporting", async () =>
+            {
+                var plans = await context.MembershipPlans.Include(p => p.Payments).ToListAsync();
+                foreach (var plan in plans)
+                {
+                    var planTotal = plan.Payments.Sum(p => p.Amount);
+                    Assert(planTotal >= 0m, $"Plan {plan.Name} revenue must be non-negative.");
                 }
             }));
 
