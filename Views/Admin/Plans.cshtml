@@ -1,0 +1,46 @@
+@model List<GymGuide.Models.MembershipPlan>
+@{
+    ViewData["Title"] = "Membership Plans";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="bi bi-card-checklist text-success me-2"></i> Membership Plans</h3>
+        <p class="text-muted small">Subscription pricing, duration, and personal trainer privileges</p>
+    </div>
+    <a asp-action="CreatePlan" class="btn btn-success fw-bold">
+        <i class="bi bi-plus-circle me-1"></i> Add Membership Plan
+    </a>
+</div>
+
+<div class="row g-4">
+    @foreach (var p in Model)
+    {
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 text-center">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0 fw-bold">@p.Name</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="display-5 fw-bold text-success mb-2">$@p.Price.ToString("N2")</div>
+                    <div class="text-muted mb-3">Duration: <strong>@p.DurationMonths Month(s)</strong></div>
+
+                    <ul class="list-unstyled text-start small mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Access to all gym facilities</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Personalized BMI & workout tracking</li>
+                        <li class="mb-2">
+                            @if (p.IncludesTrainer)
+                            {
+                                <i class="bi bi-check-circle-fill text-success me-2"></i> <strong class="text-dark">Includes Personal Trainer</strong>
+                            }
+                            else
+                            {
+                                <i class="bi bi-x-circle text-muted me-2"></i> <span class="text-muted">No Personal Trainer</span>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+</div>

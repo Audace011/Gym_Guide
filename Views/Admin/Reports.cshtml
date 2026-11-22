@@ -1,0 +1,158 @@
+@model GymGuide.ViewModels.RevenueReportViewModel
+@{
+    ViewData["Title"] = "Administrative Reports";
+    var activeMembers = ViewBag.ActiveMembers as List<GymGuide.Models.Member> ?? new List<GymGuide.Models.Member>();
+    var workloads = ViewBag.TrainerWorkloads as List<GymGuide.ViewModels.TrainerWorkloadReportItem> ?? new List<GymGuide.ViewModels.TrainerWorkloadReportItem>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph text-primary me-2"></i> Administrative Reports (FR12)</h3>
+        <p class="text-muted small">Active members, trainer workloads, and revenue breakdown</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print / Export Report
+    </button>
+</div>
+
+<!-- 1. Revenue Report Card -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-cash-coin text-warning me-2"></i> 1. Revenue Report</h5>
+        <span class="fs-5 fw-bold text-warning">Total: $@Model.TotalRevenue.ToString("N2")</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Membership Plan</th>
+                        <th>Total Payments Collected</th>
+                        <th>Revenue Generated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var plan in Model.RevenuesByPlan)
+                    {
+                        <tr>
+                            <td class="fw-bold">@plan.PlanName</td>
+                            <td>@plan.TotalPaymentsCount payments</td>
+                            <td class="text-success fw-bold">$@plan.TotalAmount.ToString("N2")</td>
+                        </tr>
+                    }
+                    <tr class="table-light fw-bold">
+                        <td>TOTAL REVENUE</td>
+                        <td>@Model.RevenuesByPlan.Sum(p => p.TotalPaymentsCount) payments</td>
+                        <td class="text-success fs-5">$@Model.TotalRevenue.ToString("N2")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Trainer Workload Report -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-person-badge text-primary me-2"></i> 2. Trainer Workload & Capacity Report</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Trainer Name</th>
+                        <th>Specialization</th>
+                        <th>Active Clients</th>
+                        <th>Capacity</th>
+                        <th>Workload %</th>
+                        <th>Availability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in workloads)
+                    {
+                        <tr>
+                            <td class="fw-bold">@t.TrainerName</td>
+                            <td><span class="badge bg-light text-dark border">@t.Specialization</span></td>
+                            <td><strong>@t.CurrentClients</strong> / @t.MaxClients</td>
+                            <td style="min-width: 150px;">
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar @(t.WorkloadPercentage >= 100 ? "bg-danger" : "bg-primary")"
+                                         style="width: @Math.Min(100, t.WorkloadPercentage)%"></div>
+                                </div>
+                            </td>
+                            <td><span class="fw-bold">@t.WorkloadPercentage%</span></td>
+                            <td>
+                                <span class="badge @(t.IsAvailable ? "bg-success" : "bg-secondary")">
+                                    @(t.IsAvailable ? "Available" : "Unavailable")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Active Members Report -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-people-fill text-success me-2"></i> 3. Active Members Report (@activeMembers.Count members)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member Name</th>
+                        <th>Email</th>
+                        <th>Fitness Goal</th>
+                        <th>Active Course</th>
+                        <th>Payment Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in activeMembers)
+                    {
+                        var activeCourse = m.MemberCourses.FirstOrDefault(mc => mc.Status == "Active");
+                        var lastPayment = m.Payments.OrderByDescending(p => p.PaidAt).FirstOrDefault();
+
+                        <tr>
+                            <td class="fw-bold">@m.User.FullName</td>
+                            <td>@m.User.Email</td>
+                            <td><span class="badge bg-light text-dark border">@m.Goal</span></td>
+                            <td>
+                                @if (activeCourse != null)
+                                {
+                                    <span class="text-primary fw-semibold">@activeCourse.Course.Name</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">None</span>
+                                }
+                            </td>
+                            <td>
+                                @if (lastPayment != null)
+                                {
+                                    <span class="badge bg-success">Paid: @lastPayment.Plan.Name</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Trial / Pending Payment</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (activeMembers.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No active members found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

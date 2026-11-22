@@ -1,0 +1,170 @@
+@model GymGuide.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Member Profile & BMI";
+
+    string badgeClass = Model.LatestBmiCategory switch
+    {
+        "Underweight" => "bg-info text-dark",
+        "Normal" => "bg-success text-white",
+        "Overweight" => "bg-warning text-dark",
+        "Obese" => "bg-danger text-white",
+        _ => "bg-secondary text-white"
+    };
+}
+
+<div class="row">
+    <!-- Left Column: BMI & Trainer Card -->
+    <div class="col-md-5 mb-4">
+        <!-- BMI Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-speedometer2 text-warning me-2"></i> BMI Status</span>
+                <span class="badge @badgeClass fs-6">@Model.LatestBmiCategory</span>
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="display-3 fw-bold text-primary mb-1">
+                    @Model.LatestBmi
+                </div>
+                <div class="text-muted small mb-3">Based on latest weight: <strong>@Model.LatestWeightKg kg</strong> and height: <strong>@(Model.HeightCm ?? 0) cm</strong></div>
+
+                <div class="progress" style="height: 18px;">
+                    <div class="progress-bar bg-info" style="width: 25%" title="Underweight (&lt; 18.5)">Under</div>
+                    <div class="progress-bar bg-success" style="width: 25%" title="Normal (18.5 - 24.9)">Normal</div>
+                    <div class="progress-bar bg-warning text-dark" style="width: 25%" title="Overweight (25.0 - 29.9)">Over</div>
+                    <div class="progress-bar bg-danger" style="width: 25%" title="Obese (&gt;= 30.0)">Obese</div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a asp-action="WeightTracker" class="btn btn-outline-primary">
+                        <i class="bi bi-graph-up me-1"></i> Log Weight & View Progress Chart
+                    </a>
+                    <a asp-controller="Course" asp-action="MyCourse" class="btn btn-warning fw-semibold">
+                        <i class="bi bi-calendar2-check me-1"></i> View My Recommended Course
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Trainer Card (FR6, FR7) -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-person-badge text-warning me-2"></i> Personal Trainer</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(Model.AssignedTrainerName))
+                {
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-warning bg-opacity-25 p-3 text-warning me-3">
+                            <i class="bi bi-person-check fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">@Model.AssignedTrainerName</h5>
+                            <span class="badge bg-primary">Specialization: @Model.AssignedTrainerSpecialization</span>
+                        </div>
+                    </div>
+                    <p class="text-muted small">Your trainer has access to your progress logs and can fine-tune your workout plan.</p>
+                }
+                else
+                {
+                    <div class="text-center py-2">
+                        <i class="bi bi-person-x fs-1 text-secondary mb-2 d-block"></i>
+                        <h6 class="fw-bold">No Trainer Assigned Yet</h6>
+                        <p class="text-muted small">
+                            Need professional 1-on-1 guidance? Request a trainer and the system will automatically match you with an available trainer specializing in <strong>@Model.Goal</strong>.
+                        </p>
+
+                        @if (Model.LatestTrainerRequestStatus == "Pending")
+                        {
+                            <div class="alert alert-warning py-2 mb-0 small">
+                                <i class="bi bi-clock-history me-1"></i> Your request is currently <strong>Pending</strong>. We are matching you with an available trainer.
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-action="RequestTrainer" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success fw-bold shadow-sm">
+                                    <i class="bi bi-person-plus-fill me-1"></i> Request a Personal Trainer
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Edit Profile Form -->
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-sliders me-2 text-primary"></i> Body Profile & Settings</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Profile" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">FULL NAME</label>
+                            <input class="form-control bg-light" value="@Model.FullName" disabled />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">EMAIL ADDRESS</label>
+                            <input class="form-control bg-light" value="@Model.Email" disabled />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="HeightCm" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <input asp-for="HeightCm" class="form-control" type="number" step="0.1" />
+                                <span class="input-group-text">cm</span>
+                            </div>
+                            <span asp-validation-for="HeightCm" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Goal" class="form-label fw-semibold"></label>
+                            <select asp-for="Goal" class="form-select fw-semibold border-warning">
+                                <option value="Lose weight">Lose weight</option>
+                                <option value="Build muscle">Build muscle</option>
+                                <option value="Stay fit">Stay fit</option>
+                            </select>
+                            <span asp-validation-for="Goal" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="DateOfBirth" class="form-label fw-semibold"></label>
+                            <input asp-for="DateOfBirth" class="form-control" />
+                            <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Gender" class="form-label fw-semibold"></label>
+                            <select asp-for="Gender" class="form-select">
+                                <option value="">-- Select Gender --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary fw-bold px-4">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

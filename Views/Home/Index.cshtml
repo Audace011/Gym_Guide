@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Smart Gym Training & Trainer Assignment";
+}
+
+<!-- Hero Section -->
+<div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center">
+    <div class="container-fluid py-3">
+        <span class="badge bg-warning text-dark fw-bold px-3 py-2 mb-3 fs-6">
+            <i class="bi bi-stars me-1"></i> SMART FITNESS & TRAINER ASSIGNMENT
+        </span>
+        <h1 class="display-4 fw-bold">Welcome to <span class="text-warning">GymGuide</span></h1>
+        <p class="col-md-8 fs-5 mx-auto text-light opacity-75">
+            Receive personalized workout routines matched to your Body Mass Index (BMI) and fitness goals, track your weekly workouts, and connect automatically with qualified personal trainers.
+        </p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a asp-controller="Account" asp-action="Register" class="btn btn-warning btn-lg fw-bold text-dark px-4 shadow">
+                <i class="bi bi-person-plus-fill me-1"></i> Get Started Free
+            </a>
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Member Login
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center p-3">
+            <div class="card-body">
+                <div class="rounded-circle bg-warning bg-opacity-25 p-3 text-warning d-inline-block mb-3">
+                    <i class="bi bi-speedometer2 fs-1"></i>
+                </div>
+                <h5 class="fw-bold">1. BMI & Body Profiling</h5>
+                <p class="text-muted small">
+                    Calculate your exact Body Mass Index from height and weight. We instantly categorize your profile (Underweight, Normal, Overweight, Obese) to target safe exercises.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center p-3">
+            <div class="card-body">
+                <div class="rounded-circle bg-primary bg-opacity-25 p-3 text-primary d-inline-block mb-3">
+                    <i class="bi bi-calendar2-check fs-1"></i>
+                </div>
+                <h5 class="fw-bold">2. Tailored Workout Plans</h5>
+                <p class="text-muted small">
+                    Get an automatic course recommendation tailored to your fitness goal: <strong>Lose weight</strong>, <strong>Build muscle</strong>, or <strong>Stay fit</strong> with day-by-day routines.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center p-3">
+            <div class="card-body">
+                <div class="rounded-circle bg-success bg-opacity-25 p-3 text-success d-inline-block mb-3">
+                    <i class="bi bi-person-check fs-1"></i>
+                </div>
+                <h5 class="fw-bold">3. Smart Trainer Assignment</h5>
+                <p class="text-muted small">
+                    Request a personal trainer anytime. Our algorithm automatically assigns the most suitable available trainer based on specialization and lowest current workload.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BMI Guide Reference Table -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-info-circle text-primary me-2"></i> BMI Classification Guide</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th>BMI Range</th>
+                        <th>Classification</th>
+                        <th>Recommended Training Focus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold">&lt; 18.5</td>
+                        <td><span class="badge bg-info text-dark">Underweight</span></td>
+                        <td>Lean muscle building, strength foundations, core stability</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">18.5 – 24.9</td>
+                        <td><span class="badge bg-success">Normal</span></td>
+                        <td>Hypertrophy, functional conditioning, balanced muscle definition</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">25.0 – 29.9</td>
+                        <td><span class="badge bg-warning text-dark">Overweight</span></td>
+                        <td>Aerobic conditioning, progressive resistance, fat loss</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">&ge; 30.0</td>
+                        <td><span class="badge bg-danger">Obese</span></td>
+                        <td>Low-impact calorie burn, joint mobility, gradual stamina building</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

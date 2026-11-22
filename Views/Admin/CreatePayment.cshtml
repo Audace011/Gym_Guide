@@ -1,0 +1,73 @@
+@model GymGuide.ViewModels.PaymentCreateViewModel
+@{
+    ViewData["Title"] = "Record Payment";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card text-warning me-2"></i> Record Membership Payment</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="CreatePayment" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="MemberId" class="form-label fw-semibold"></label>
+                        <select asp-for="MemberId" asp-items="ViewBag.Members" class="form-select" required>
+                            <option value="">-- Choose Member --</option>
+                        </select>
+                        <span asp-validation-for="MemberId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PlanId" class="form-label fw-semibold"></label>
+                        <select asp-for="PlanId" asp-items="ViewBag.Plans" class="form-select" id="planSelect" required>
+                            <option value="">-- Choose Plan --</option>
+                        </select>
+                        <span asp-validation-for="PlanId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Amount" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Amount" class="form-control" type="number" step="0.01" id="amountInput" required />
+                        </div>
+                        <span asp-validation-for="Amount" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Method" class="form-label fw-semibold"></label>
+                        <select asp-for="Method" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Mobile Money">Mobile Money</option>
+                            <option value="Card">Credit / Debit Card</option>
+                        </select>
+                        <span asp-validation-for="Method" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Payments" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success fw-bold px-4">Save Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const planPrices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PlanPrices ?? new Dictionary<int, decimal>()));
+        document.getElementById('planSelect')?.addEventListener('change', function () {
+            const planId = parseInt(this.value);
+            if (planPrices[planId] !== undefined) {
+                document.getElementById('amountInput').value = planPrices[planId];
+            }
+        });
+    </script>
+}

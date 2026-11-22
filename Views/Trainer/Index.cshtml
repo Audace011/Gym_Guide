@@ -1,0 +1,91 @@
+@model GymGuide.ViewModels.TrainerDashboardViewModel
+@{
+    ViewData["Title"] = "Trainer Dashboard";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h3 class="fw-bold mb-0"><i class="bi bi-person-workspace text-warning me-2"></i> Trainer Dashboard</h3>
+        <p class="text-muted small">Monitor your assigned gym members, check their fitness progress, and fine-tune workout plans</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        @if (Model.Trainer != null)
+        {
+            <div class="card p-2 bg-white shadow-sm d-inline-block text-start">
+                <span class="small text-muted d-block">Workload Capacity:</span>
+                <strong class="text-primary fs-5">@Model.AssignedMembers.Count / @Model.Trainer.MaxClients</strong> Clients
+                <span class="badge @(Model.Trainer.IsAvailable ? "bg-success" : "bg-danger") ms-2">
+                    @(Model.Trainer.IsAvailable ? "Available" : "Unavailable")
+                </span>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-people-fill text-primary me-2"></i> Assigned Members (@Model.AssignedMembers.Count)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member Name</th>
+                        <th>Contact</th>
+                        <th>Goal</th>
+                        <th>Latest Weight</th>
+                        <th>BMI & Category</th>
+                        <th>Current Course</th>
+                        <th>Completed Sessions</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.AssignedMembers)
+                    {
+                        string badge = m.LatestBmiCategory switch
+                        {
+                            "Underweight" => "bg-info text-dark",
+                            "Normal" => "bg-success text-white",
+                            "Overweight" => "bg-warning text-dark",
+                            "Obese" => "bg-danger text-white",
+                            _ => "bg-secondary"
+                        };
+
+                        <tr>
+                            <td class="fw-bold">@m.FullName</td>
+                            <td>
+                                <div>@m.Email</div>
+                                <small class="text-muted">@m.PhoneNumber</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">@m.Goal</span></td>
+                            <td>@m.LatestWeightKg kg</td>
+                            <td>
+                                <strong>@m.LatestBmi</strong> <span class="badge @badge ms-1">@m.LatestBmiCategory</span>
+                            </td>
+                            <td><span class="text-primary fw-semibold">@m.ActiveCourseName</span></td>
+                            <td>
+                                <span class="badge bg-secondary">@m.CompletedSessionsCount</span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="MemberDetails" asp-route-id="@m.MemberId" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye me-1"></i> View Progress & Plan
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.AssignedMembers.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-person-x fs-1 d-block mb-2 text-secondary"></i>
+                                No members are currently assigned to you.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
