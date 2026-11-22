@@ -5,12 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=GymGuide.db";
+var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 var isSqlite = builder.Configuration.GetValue<bool>("UseSqlite")
-               || connectionString.Contains(".db")
-               || connectionString.StartsWith("Data Source=GymGuide", StringComparison.OrdinalIgnoreCase);
+               || string.IsNullOrWhiteSpace(rawConnectionString)
+               || rawConnectionString.Contains(".db");
+
+var connectionString = isSqlite
+    ? (rawConnectionString != null && rawConnectionString.Contains(".db") ? rawConnectionString : "Data Source=GymGuide.db")
+    : rawConnectionString!;
 
 if (isSqlite)
 {

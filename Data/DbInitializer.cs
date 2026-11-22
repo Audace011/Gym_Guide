@@ -26,9 +26,10 @@ namespace GymGuide.Data
                 {
                     await databaseCreator.CreateTablesAsync();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore if tables already exist
+                    // Tables might already exist, but print if debugging
+                    Console.WriteLine($"[DbInitializer] CreateTables notice: {ex.Message}");
                 }
             }
 
