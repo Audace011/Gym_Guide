@@ -1,5 +1,6 @@
 using GymGuide.Data;
 using GymGuide.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,6 +63,12 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+// Trust Render's reverse proxy headers (required for HTTPS redirect detection)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -75,9 +82,17 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseDeveloperExceptionPage();
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS when NOT running behind a proxy that already handles it
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
