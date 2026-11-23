@@ -1,3 +1,4 @@
+using GymGuide.Services;
 using GymGuide.Data;
 using GymGuide.Services;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -76,13 +77,16 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AuthDbContext>();
 
+feature/member-bmi-progress
+builder.Services.AddControllersWithViews();
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-// Register Business Services (conserving both teammate services and core interfaces)
+builder.Services.AddScoped<BmiService>();
 builder.Services.AddScoped<IBmiService, BmiService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<RecommendationService>();
@@ -90,6 +94,7 @@ builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<ITrainerAssignmentService, TrainerAssignmentService>();
 
 builder.Services.AddRazorPages();
+ main
 
 var app = builder.Build();
 

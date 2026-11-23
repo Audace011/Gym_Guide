@@ -1,0 +1,131 @@
+@model GymGuide.ViewModels.MemberProgressViewModel
+
+@{
+    ViewData["Title"] = "Weight Progress";
+    var chartMeasurements = Model.Measurements
+        .OrderBy(measurement => measurement.LoggedAt)
+        .ToArray();
+    var chartLabels = System.Text.Json.JsonSerializer.Serialize(
+        chartMeasurements.Select(measurement => measurement.LoggedAt.ToString("yyyy-MM-dd HH:mm")));
+    var chartWeights = System.Text.Json.JsonSerializer.Serialize(
+        chartMeasurements.Select(measurement => measurement.WeightKg));
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>Weight Progress</h2>
+            <p>Record measurements and follow your weight history.</p>
+        </div>
+        <a asp-action="Profile" class="btn btn-outline-secondary">My Profile</a>
+    </div>
+
+    @if (TempData["Success"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
+    <div class="card p-4 mb-4">
+        <h4>Record a new measurement</h4>
+        @if (Model.HeightCm is not > 0)
+        {
+            <p class="text-warning">Add your height to your profile before recording weight.</p>
+        }
+        <form asp-action="RecordWeight" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="WeightKg" class="form-label">Weight (kg)</label>
+                <input asp-for="WeightKg" type="number" step="0.1" class="form-control" />
+                <span asp-validation-for="WeightKg" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary" disabled="@(Model.HeightCm is not > 0)">
+                Save measurement
+            </button>
+        </form>
+    </div>
+
+    <div class="card p-4 mb-4">
+        <h4>Weight over time</h4>
+        @if (chartMeasurements.Length > 0)
+        {
+            <canvas id="weightProgressChart" role="img" aria-label="Line chart of weight measurements over time"></canvas>
+        }
+        else
+        {
+            <p>No measurements yet. Record your first weight to see your progress chart.</p>
+        }
+    </div>
+
+    <div class="card p-4">
+        <h4>Previous measurements</h4>
+        @if (Model.Measurements.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Weight (kg)</th>
+                            <th scope="col">BMI</th>
+                            <th scope="col">Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var measurement in Model.Measurements)
+                        {
+                            <tr>
+                                <td>@measurement.LoggedAt.ToString("g")</td>
+                                <td>@measurement.WeightKg.ToString("0.0")</td>
+                                <td>@measurement.Bmi.ToString("0.0")</td>
+                                <td>@measurement.BmiCategory</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p>No weight measurements have been recorded yet.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (chartMeasurements.Length > 0)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+        <script>
+            const labels = @Html.Raw(chartLabels);
+            const weights = @Html.Raw(chartWeights);
+
+            new Chart(document.getElementById("weightProgressChart"), {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Weight (kg)",
+                        data: weights,
+                        borderColor: "#0d6efd",
+                        backgroundColor: "rgba(13, 110, 253, 0.15)",
+                        fill: true,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: "Weight (kg)" }
+                        },
+                        x: {
+                            title: { display: true, text: "Date recorded" }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}

@@ -23,4 +23,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="GymGuide.Tests/**/*.cs" />
+    <Content Remove="GymGuide.Tests/**" />
+    <EmbeddedResource Remove="GymGuide.Tests/**" />
+    <None Remove="GymGuide.Tests/**" />
+  </ItemGroup>
+
 </Project>
