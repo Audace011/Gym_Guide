@@ -42,14 +42,16 @@ public partial class ApplicationDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        // Only configure here if not already configured via DI (e.g. in Program.cs)
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnection");
+            optionsBuilder.UseSqlite("Data Source=GymGuide.db");
         }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // SQLite: convert decimal properties to double (SQLite has no native decimal)
         if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -65,6 +67,11 @@ public partial class ApplicationDbContext : DbContext
                 }
             }
         }
+
+        // Use provider-aware default value SQL for datetime columns
+        bool isPostgres = Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL";
+        bool isSqlite   = Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite";
+        string nowSql   = isPostgres ? "NOW()" : isSqlite ? "datetime('now')" : "getdate()";
 
         modelBuilder.Entity<CourseExercise>(entity =>
         {
@@ -145,8 +152,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Method).HasMaxLength(30);
             entity.Property(e => e.PaidAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql(nowSql);
+            if (!isPostgres)
+                modelBuilder.Entity<Payment>().Property(e => e.PaidAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Member).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.MemberId)
@@ -190,8 +198,9 @@ public partial class ApplicationDbContext : DbContext
             entity.HasKey(e => e.RequestId).HasName("PK__TrainerR__33A8517A1D92C8E6");
 
             entity.Property(e => e.RequestedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql(nowSql);
+            if (!isPostgres)
+                modelBuilder.Entity<TrainerRequest>().Property(e => e.RequestedAt).HasColumnType("datetime");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasDefaultValue("Pending");
@@ -241,8 +250,9 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("BMICategory");
             entity.Property(e => e.LoggedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql(nowSql);
+            if (!isPostgres)
+                modelBuilder.Entity<WeightLog>().Property(e => e.LoggedAt).HasColumnType("datetime");
             entity.Property(e => e.WeightKg).HasColumnType("decimal(5, 2)");
 
             entity.HasOne(d => d.Member).WithMany(p => p.WeightLogs)

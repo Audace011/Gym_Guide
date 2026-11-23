@@ -6,23 +6,54 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ── Database provider selection ──────────────────────────────────────────────
+// Priority: DATABASE_URL env var (Render PostgreSQL) → appsettings connection string
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
 
-var isSqlite = builder.Configuration.GetValue<bool?>("UseSqlite") ?? true;
-if (rawConnectionString != null && rawConnectionString.Contains("Server=") && !builder.Configuration.GetValue<bool>("UseSqlite"))
+string connectionString;
+bool usePostgres = !string.IsNullOrEmpty(databaseUrl) || 
+                   (defaultConn != null && (defaultConn.StartsWith("postgres", StringComparison.OrdinalIgnoreCase) || defaultConn.Contains("Host=")));
+bool isSqlite = false;
+
+if (usePostgres)
 {
-    isSqlite = false;
+    var rawUrl = !string.IsNullOrEmpty(databaseUrl) ? databaseUrl : defaultConn!;
+    if (rawUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+        rawUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        var uri = new Uri(rawUrl);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var user = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        connectionString = $"Host={uri.Host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    }
+    else
+    {
+        connectionString = rawUrl;
+    }
+}
+else
+{
+    // Fallback: use appsettings (SQLite for local dev)
+    connectionString = defaultConn ?? "Data Source=GymGuide.db";
+    isSqlite = builder.Configuration.GetValue<bool?>("UseSqlite") ?? true;
 }
 
-var connectionString = isSqlite
-    ? (rawConnectionString != null && rawConnectionString.Contains(".db") ? rawConnectionString : "Data Source=GymGuide.db")
-    : rawConnectionString!;
-
-if (isSqlite)
+if (usePostgres)
+{
+    builder.Services.AddDbContext<AuthDbContext>(options =>
+        options.UseNpgsql(connectionString));
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+else if (isSqlite)
 {
     builder.Services.AddDbContext<AuthDbContext>(options =>
         options.UseSqlite(connectionString));
-
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlite(connectionString));
 }
@@ -30,7 +61,6 @@ else
 {
     builder.Services.AddDbContext<AuthDbContext>(options =>
         options.UseSqlServer(connectionString));
-
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
 }
