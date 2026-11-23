@@ -18,7 +18,7 @@ bool isSqlite = false;
 
 if (usePostgres)
 {
-    var rawUrl = !string.IsNullOrEmpty(databaseUrl) ? databaseUrl : defaultConn!;
+    var rawUrl = (!string.IsNullOrEmpty(databaseUrl) ? databaseUrl : defaultConn!).Trim().Trim('"', '\'');
     if (rawUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
         rawUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
     {
@@ -29,7 +29,7 @@ if (usePostgres)
         var port = uri.Port > 0 ? uri.Port : 5432;
         var database = uri.AbsolutePath.TrimStart('/');
 
-        connectionString = $"Host={uri.Host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+        connectionString = $"Host={uri.Host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Prefer;Trust Server Certificate=true";
     }
     else
     {
@@ -117,6 +117,10 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
 }
 
 // Only redirect to HTTPS when NOT running behind a proxy that already handles it
