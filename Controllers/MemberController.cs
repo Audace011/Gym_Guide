@@ -52,12 +52,12 @@ public class MemberController : Controller
 
         if (model.HeightCm.HasValue && model.WeightKg.HasValue)
         {
-            var result = _bmiService.CalculateBmi(
+            var bmi = _bmiService.CalculateBmi(
                 model.WeightKg.Value,
                 model.HeightCm.Value);
 
-            model.Bmi = result.Bmi;
-            model.BmiCategory = result.Category;
+            model.Bmi = bmi;
+            model.BmiCategory = _bmiService.GetBmiCategory(bmi);
         }
 
         return View(model);
@@ -79,9 +79,10 @@ public class MemberController : Controller
         member.HeightCm = model.HeightCm;
         member.Goal = model.Goal;
 
-        var bmiResult = _bmiService.CalculateBmi(
+        var bmi = _bmiService.CalculateBmi(
             model.WeightKg!.Value,
             model.HeightCm!.Value);
+        var category = _bmiService.GetBmiCategory(bmi);
 
         var latestWeight = await _context.WeightLogs
             .Where(w => w.MemberId == member.MemberId)
@@ -94,8 +95,8 @@ public class MemberController : Controller
             {
                 MemberId = member.MemberId,
                 WeightKg = model.WeightKg.Value,
-                Bmi = bmiResult.Bmi,
-                Bmicategory = bmiResult.Category,
+                Bmi = bmi,
+                Bmicategory = category,
                 LoggedAt = DateTime.Now
             });
         }
@@ -135,16 +136,17 @@ public class MemberController : Controller
             return View("Progress", await BuildProgressViewModelAsync(member, model.WeightKg));
         }
 
-        var bmiResult = _bmiService.CalculateBmi(
+        var bmi = _bmiService.CalculateBmi(
             model.WeightKg!.Value,
             member.HeightCm.Value);
+        var category = _bmiService.GetBmiCategory(bmi);
 
         _context.WeightLogs.Add(new GymGuide.Models.WeightLog
         {
             MemberId = member.MemberId,
             WeightKg = model.WeightKg.Value,
-            Bmi = bmiResult.Bmi,
-            Bmicategory = bmiResult.Category,
+            Bmi = bmi,
+            Bmicategory = category,
             LoggedAt = DateTime.Now
         });
 

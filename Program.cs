@@ -1,4 +1,3 @@
-using GymGuide.Services;
 using GymGuide.Data;
 using GymGuide.Services;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -77,7 +76,6 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AuthDbContext>();
 
-feature/member-bmi-progress
 builder.Services.AddControllersWithViews();
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -94,7 +92,6 @@ builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<ITrainerAssignmentService, TrainerAssignmentService>();
 
 builder.Services.AddRazorPages();
- main
 
 var app = builder.Build();
 
@@ -136,6 +133,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllers();
 
 if (args.Contains("--test"))
 {
